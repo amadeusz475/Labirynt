@@ -1,0 +1,150 @@
+#include <stdio.h> //Amadeusz Zaradny LB
+#include <stdlib.h>
+
+int startM;
+int startN;
+int koniecM;
+int koniecN;
+int ilosc_krokow=0;
+int *droga;
+int *odwiedzony;
+
+void DFS_Odwiedzanie(int **macierzS,int wierzcholek,int m,int n)
+{
+    int i;
+    odwiedzony[wierzcholek]=1;
+    ilosc_krokow++;
+    for(i=0;i<m*n;i++){
+        if(macierzS[wierzcholek][i]==1){
+            if(odwiedzony[i]==0){
+                droga[i]=wierzcholek;
+                DFS_Odwiedzanie(macierzS,i,m,n);
+            }
+        }
+    }
+}
+
+void DFS(int **macierzS,int m,int n)
+{
+    int i,j;
+    odwiedzony = malloc(sizeof(int)*m*n);
+    for(i=0;i<m*n;i++){
+        odwiedzony[i] = 0;
+        droga[i]=-1;
+    }
+    droga[n*startM+startN] = 0;
+    DFS_Odwiedzanie(macierzS,n*startM+startN,m,n);
+}
+
+char** labiryntyzacja(int m, int n)
+{
+    int i,j;
+    char pom;
+
+    char **labirynt = malloc(sizeof(char*)*m);
+    for(i=0;i<m;i++){
+        labirynt[i] = malloc(sizeof(char)*(n+1));
+    }
+
+    for(i=0;i<m;i++){
+        for(j=0;j<n;j++){
+            scanf("%c", &pom);
+            if(pom=='0'){
+                startM = i;
+                startN = j;
+            }else if(pom=='X'){
+                koniecM = i;
+                koniecN = j;
+            }
+             if(pom!='\n')  labirynt[i][j]=pom;
+             else j--;
+        }
+    }
+    return labirynt;
+}
+
+void drukuj_labirynt(char **labirynt,int m, int n)
+{
+    int i,j;
+    for(i=0;i<m;i++){
+        printf("\n");
+        for(j=0;j<n;j++){
+            printf("%c", labirynt[i][j]);
+        }
+    }
+}
+
+int tworzenie_grafu(char **labirynt, int m, int n) //tworzenie macierzy sasiedztwa
+{
+    int i,j;
+    int **macierzS = malloc(sizeof(int*)*m*n);
+    for(i=0;i<n*m;i++) macierzS[i] = malloc(sizeof(int)*m*n);
+
+    for(i=0;i<m*n;i++){
+        for(j=0;j<m*n;j++) macierzS[i][j]=0;
+    }
+
+    for(i=1;i<(m-1);i++){
+        for(j=1;j<(n-1);j++){
+            if(labirynt[i][j]==' '||labirynt[i][j]=='0'||labirynt[i][j]=='X'){
+                if(labirynt[i-1][j]==' '||labirynt[i-1][j]=='X'||labirynt[i-1][j]=='0') macierzS[n*i+j][n*(i-1)+j]=1;
+                if(labirynt[i+1][j]==' '||labirynt[i+1][j]=='X'||labirynt[i+1][j]=='0') macierzS[n*i+j][n*(i+1)+j]=1;
+                if(labirynt[i][j-1]==' '||labirynt[i][j-1]=='X'||labirynt[i][j-1]=='0') macierzS[n*i+j][n*i+j-1]=1;
+                if(labirynt[i][j+1]==' '||labirynt[i][j+1]=='X'||labirynt[i][j+1]=='0') macierzS[n*i+j][n*i+j+1]=1;
+                }
+        }
+    }
+
+    /*for(i=0;i<m*n;i++){
+        printf("\n%d ",i);
+        for(j=0;j<m*n;j++){
+            printf("%d ", macierzS[i][j]);
+        }
+    }*/
+
+    return macierzS;
+}
+
+void jak_wyjsc(int n,int m)
+{
+    int *pomoc = malloc(sizeof(int)*(ilosc_krokow));
+    int i=0;
+    int meta = n*koniecM+koniecN;
+    int start = n*startM+startN;
+    int polozenie = meta;
+
+    while(polozenie!=start){
+        pomoc[i]=polozenie;
+        polozenie=droga[polozenie];
+        i++;
+    }
+    pomoc[i]=start;
+
+    for(i=ilosc_krokow-1;i>0;i--){
+        if(pomoc[i]==pomoc[i-1]+n) printf(" S ");
+        if(pomoc[i]==pomoc[i-1]-n) printf(" N ");
+        if(pomoc[i]==pomoc[i-1]+1) printf(" W ");
+        if(pomoc[i]==pomoc[i-1]-1) printf(" E ");
+    }
+
+}
+int main()
+{
+    int m,n,i,j;
+    char pom;
+    printf("Podaj m i n: ");
+    scanf("%d%d", &m,&n);
+    printf("\n");
+
+    droga = malloc(sizeof(int)*m*n);
+    char **labirynt = labiryntyzacja(m,n);
+    drukuj_labirynt(labirynt,m,n);
+    int **macierzS = tworzenie_grafu(labirynt,m,n);
+
+    DFS(macierzS,m,n);
+    printf("\n");
+
+    jak_wyjsc(n,m);
+
+    return 0;
+}
